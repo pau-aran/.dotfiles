@@ -13,7 +13,7 @@ Personal config for pi, agent skills, Herdr and the shell prompt.
 ## Use
 
 ```sh
-git clone git@github.com:pauaran/.dotfiles.git ~/.dotfiles
+git clone https://github.com/pau-aran/.dotfiles.git ~/.dotfiles
 ~/.dotfiles/dot link     # existing files move to ~/.dotfiles/backups/
 ~/.dotfiles/dot doctor   # report files that are not linked and missing tools
 ```
