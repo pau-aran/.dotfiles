@@ -1,0 +1,2 @@
+git:github.com/dmmulroy/pi-claude-cli
+npm:@plannotator/pi-extension
