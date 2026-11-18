@@ -1,0 +1,31 @@
+/* Default style: the daisy look. It sets the role tokens of the kit, for the light and the dark theme, and nothing else. The look has no shadows.
+   Font: put this link in the head. System fonts replace Geist when the request fails.
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap"> */
+:root {
+  --bg: #ffffff; --bg-subtle: #fafafa;
+  --line: #ebebeb; --line-strong: #d4d4d4;
+  --text: #171717; --text-2: #666666; --text-3: #8f8f8f;
+  --accent: #0038f0; --accent-soft: rgba(0, 56, 240, 0.08);
+  --ok: #00915a; --warn: #b26a00; --bad: #d90d43;
+  --font-text: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-code: 'Geist Mono', ui-monospace, SFMono-Regular, 'Cascadia Mono', Menlo, Consolas, monospace;
+}
+/* The dark values appear two times: one time for the system setting, one time for an explicit data-theme. Keep them the same. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0a0a0a; --bg-subtle: #111111;
+    --line: #222222; --line-strong: #333333;
+    --text: #ededed; --text-2: #a1a1a1; --text-3: #737373;
+    --accent: #4d7cff; --accent-soft: rgba(77, 124, 255, 0.14);
+    --ok: #3ecf8e; --warn: #f5a623; --bad: #ff5c7f;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0a0a; --bg-subtle: #111111;
+  --line: #222222; --line-strong: #333333;
+  --text: #ededed; --text-2: #a1a1a1; --text-3: #737373;
+  --accent: #4d7cff; --accent-soft: rgba(77, 124, 255, 0.14);
+  --ok: #3ecf8e; --warn: #f5a623; --bad: #ff5c7f;
+}

@@ -1,0 +1,66 @@
+/* Explainer kit: the CSS that the engine and the diagram grammar need. Paste it inline, after the style.
+   It reads role tokens only. The style gives their values, and the page gives the layout. */
+/* Colour has one meaning each. Accent: the part in focus (the main path, the selected part, the active step, a link).
+   Grey (--text-3 and the lines): all other parts. */
+
+[hidden] { display: none !important; }
+
+/* Frame: on a narrow screen a diagram scrolls sideways inside its frame. */
+[data-frame] { overflow-x: auto; }
+
+/* Diagram parts. */
+.zone rect { fill: var(--bg-subtle); stroke: var(--line); }
+.zone text { fill: var(--text-2); font: 500 10px var(--font-code); letter-spacing: 0.12em; text-transform: uppercase; }
+.n rect { fill: var(--bg); stroke: var(--text-3); stroke-width: 1; transition: stroke 120ms, fill 120ms; }
+.n .name { fill: var(--text); font-family: var(--font-text); font-size: 14px; font-weight: 600; text-anchor: middle; }
+.n .sub { fill: var(--text-2); font: 400 10.5px var(--font-code); text-anchor: middle; }
+.n .tag { fill: var(--text-3); font: 500 8.5px var(--font-code); letter-spacing: 0.1em; text-transform: uppercase; }
+.n .num { fill: var(--text-2); font: 500 9px var(--font-code); letter-spacing: 0.1em; text-anchor: end; }
+.n.focal rect { fill: var(--accent-soft); stroke: var(--accent); }
+.n.store rect { fill: var(--bg-subtle); }
+.n.new rect { stroke: var(--accent); stroke-dasharray: 6 4; }
+.n.ext rect { fill: var(--bg-subtle); stroke: var(--line-strong); stroke-dasharray: 3 3; }
+.e { fill: none; stroke: var(--text-3); stroke-width: 1.25; marker-end: url(#a); transition: stroke 120ms; }
+.e.main { stroke: var(--accent); stroke-width: 1.5; marker-end: url(#a-accent); }
+.e.back { stroke-dasharray: 4 3; }
+.e.join { marker-end: none; }
+.e.new { stroke: var(--accent); stroke-dasharray: 6 4; marker-end: url(#a-accent); }
+.elabel { fill: var(--text-2); font: 500 9.5px var(--font-code); letter-spacing: 0.08em; text-transform: uppercase; text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 6px; stroke-linejoin: round; }
+.elabel.side { text-anchor: start; }
+#a path { fill: var(--text-3); }
+#a-accent path { fill: var(--accent); }
+
+/* Lit parts. A map, a story, and a switch each light the parts of one selection and dim the others.
+   data-on on a node, an edge, or a label lists the selections that light it, with spaces between them. */
+.is-lit [data-on] { opacity: 0.4; transition: opacity 200ms; }
+.is-lit [data-on].is-on { opacity: 1; }
+.is-lit .n.is-on rect { stroke: var(--accent); stroke-width: 1.75; }
+.is-lit .e.is-on { stroke: var(--accent); }
+.is-lit .e.is-on:not(.join) { marker-end: url(#a-accent); }
+.is-lit .elabel.is-on { fill: var(--text); }
+.dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+
+/* Selection: a map node that the reader can select, and the selected node. */
+.n[data-show] { cursor: pointer; outline: none; }
+.n[data-show]:hover rect, .n[data-show]:focus-visible rect { stroke: var(--accent); }
+.n.is-sel rect { stroke: var(--accent); stroke-width: 2; stroke-dasharray: none; fill: var(--accent-soft); }
+
+/* Panel: only the article with is-on shows. The page gives the shown article its display. */
+[data-panel] > article:not(.is-on) { display: none; }
+
+/* Story: the reader can select a step. Top bar: the link of the section on the screen. */
+[data-step] { cursor: pointer; }
+[data-toc] a[aria-current] { color: var(--accent); }
+
+/* Legend keys: one for each outline, line style, or colour in a diagram or a chart. */
+.key { display: inline-block; flex: none; width: 1.4rem; height: 0.85rem; vertical-align: middle; border: 1px solid var(--text-3); border-radius: 3px; background: var(--bg); }
+.key.focal { border-color: var(--accent); background: var(--accent-soft); }
+.key.new { border: 1px dashed var(--accent); }
+.key.ext { border: 1px dashed var(--line-strong); background: var(--bg-subtle); }
+.key.store { background: var(--bg-subtle); }
+.key.zone { border-color: var(--line); background: var(--bg-subtle); }
+.key.main, .key.edge, .key.back { height: 0; border: 0; border-top: 1.5px solid var(--accent); border-radius: 0; }
+.key.edge { border-top: 1.25px solid var(--text-3); }
+.key.back { border-top: 1.25px dashed var(--text-3); }
+.key.base, .key.subject { width: 0.85rem; border: 0; background: var(--text-3); }
+.key.subject { background: var(--accent); }
