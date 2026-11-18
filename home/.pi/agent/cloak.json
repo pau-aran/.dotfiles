@@ -1,0 +1,51 @@
+{
+  "enabled": true,
+  "cloakCharacter": "*",
+  "cloakLength": 16,
+  "tryAllPatterns": true,
+  "patterns": [
+    {
+      "filePattern": [
+        "**/.env",
+        "**/.env.*",
+        "**/*.env",
+        "**/*.env.*",
+        "**/.dev.vars",
+        "**/.dev.vars.*",
+        "**/*.tfvars",
+        "**/*.tfvars.json",
+        "**/.npmrc",
+        "**/.pypirc",
+        "**/.netrc",
+        "**/.aws/credentials",
+        "**/auth.json",
+        "**/auth.json.*",
+        "**/mcp-auth.json",
+        "**/credentials.json",
+        "**/credentials.json.*",
+        "**/*.pem",
+        "**/*.key",
+        "**/id_rsa",
+        "**/id_ed25519"
+      ],
+      "cloakPattern": ".+",
+      "replace": "[REDACTED]"
+    },
+    {
+      "filePattern": [
+        "**/*.json",
+        "**/*.jsonc",
+        "**/*.yaml",
+        "**/*.yml",
+        "**/*.toml",
+        "**/*.properties",
+        "**/*.config"
+      ],
+      "cloakPattern": {
+        "pattern": "^.*(?:password|secret|token|api[-_]?key|connection[-_]?string|authorization|credential|private[-_]?key|[\"'](?:access|refresh)[\"'])\\s*[\"']?\\s*[:=].*$",
+        "flags": "i"
+      },
+      "replace": "[REDACTED]"
+    }
+  ]
+}
