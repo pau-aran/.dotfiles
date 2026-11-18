@@ -7,6 +7,7 @@ Personal dotfiles. `home/` mirrors `$HOME`; `./dot link` symlinks each file into
 | Task | Location |
 |------|----------|
 | pi working rules | `home/.pi/agent/AGENTS.md` |
+| pi extension workspace (deps, checks) | `home/.pi/AGENTS.md` |
 | pi extension | `home/.pi/agent/extensions/` (`<name>.ts` or `<name>/index.ts`) |
 | Secret masking | `home/.pi/agent/cloak.json` |
 | Skill | `home/.agents/skills/<name>/SKILL.md` |

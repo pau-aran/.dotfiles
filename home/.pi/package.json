@@ -1,0 +1,22 @@
+{
+  "name": ".pi",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "agent/extensions/*"
+  ],
+  "scripts": {
+    "check": "npm run typecheck --workspaces --if-present && npm test --workspaces --if-present && npm run test:continue-after-compaction",
+    "test:continue-after-compaction": "node --import tsx --test agent/extensions/tests/continue-after-compaction.test.ts"
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "^1.5.2",
+    "@earendil-works/pi-coding-agent": "^1.5.2",
+    "@earendil-works/pi-tui": "^1.5.2",
+    "typebox": "^1.1.38"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
