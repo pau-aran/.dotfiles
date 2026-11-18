@@ -1,0 +1,22 @@
+# Backups made by `dot link`
+backups/
+
+# Machine-local shell config (work aliases, provider env)
+.bashrc.local
+
+# pi: only tracked customisation lives in home/.pi/agent.
+# settings.json, models.json, auth, sessions and caches stay on each machine.
+home/.pi/agent/*
+!home/.pi/agent/AGENTS.md
+!home/.pi/agent/cloak.json
+!home/.pi/agent/keybindings.json
+!home/.pi/agent/extensions/
+home/.pi/agent/extensions/**/node_modules/
+
+# Herdr runtime state
+home/.config/herdr/*
+!home/.config/herdr/config.toml
+!home/.config/herdr/themes/
+
+.DS_Store
+node_modules/

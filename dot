@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# dot: link the files under home/ into $HOME, one symlink per file.
+set -euo pipefail
+
+DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE="$DOTFILES/home"
+BACKUP="$DOTFILES/backups/$(date +%Y%m%d-%H%M%S)"
+
+usage() {
+  echo "usage: dot link | dot doctor"
+}
+
+# Each tracked file maps to the same relative path under $HOME.
+tracked_files() {
+  (cd "$SOURCE" && find . -type f -o -type l | sed 's|^\./||' | sort)
+}
+
+link() {
+  local rel target
+  while read -r rel; do
+    target="$HOME/$rel"
+    [ "$(readlink "$target" 2>/dev/null)" = "$SOURCE/$rel" ] && continue
+    if [ -e "$target" ] || [ -L "$target" ]; then
+      mkdir -p "$BACKUP/$(dirname "$rel")"
+      mv "$target" "$BACKUP/$rel"
+      echo "backed up $target"
+    fi
+    mkdir -p "$(dirname "$target")"
+    ln -s "$SOURCE/$rel" "$target"
+    echo "linked $target"
+  done < <(tracked_files)
+}
+
+doctor() {
+  local rel bad=0
+  while read -r rel; do
+    if [ "$(readlink "$HOME/$rel" 2>/dev/null)" != "$SOURCE/$rel" ]; then
+      echo "not linked: ~/$rel"
+      bad=1
+    fi
+  done < <(tracked_files)
+  for tool in git pi herdr oh-my-posh; do
+    command -v "$tool" >/dev/null || { echo "missing tool: $tool"; bad=1; }
+  done
+  [ "$bad" = 0 ] && echo "ok"
+  return "$bad"
+}
+
+case "${1:-}" in
+  link) link ;;
+  doctor) doctor ;;
+  *) usage; exit 1 ;;
+esac
