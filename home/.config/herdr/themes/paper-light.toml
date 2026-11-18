@@ -1,0 +1,26 @@
+[theme]
+# Paper Light — Windows Terminal Ubuntu "Paper Light" palette.
+# Neutral UI shades blend the scheme background and foreground.
+name = "catppuccin-latte"
+auto_switch = false
+
+[theme.custom]
+panel_bg = "#EBE7E4"
+sidebar_bg = "#EBE7E4"
+active_row_bg = "#D4C8BE"
+selection_bg = "#D4C8BE"
+surface0 = "#E1DEDC"
+surface1 = "#D7D5D3"
+surface_dim = "#EBE7E4"
+overlay0 = "#8B847D"
+overlay1 = "#747980"
+text = "#252F3D"
+subtext0 = "#565D67"
+accent = "#4B607C"
+blue = "#4B607C"
+mauve = "#7A4E7E"
+green = "#5E6B3A"
+yellow = "#9A6A1F"
+red = "#9E3B2C"
+teal = "#3F7A7A"
+peach = "#B86B52"

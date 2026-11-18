@@ -1,0 +1,22 @@
+[theme]
+# Pi Night — colors from the saved Herdr Pi Night palette.
+name = "catppuccin"
+auto_switch = false
+
+[theme.custom]
+panel_bg = "#101116"
+sidebar_bg = "reset"
+active_row_bg = "#242527"
+selection_bg = "#2A3550"
+surface0 = "#1B1C20"
+surface1 = "#2C2E34"
+surface_dim = "#101116"
+overlay0 = "#5C6070"
+overlay1 = "#8A8C92"
+text = "#D3D5DB"
+subtext0 = "#A5A6AA"
+accent = "#4274EA"
+blue = "#7598D8"
+green = "#7EB07F"
+yellow = "#D9B97A"
+red = "#D08582"

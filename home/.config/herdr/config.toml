@@ -1,0 +1,168 @@
+onboarding = false
+# Herdr config — https://herdr.dev/docs/configuration/
+
+[terminal]
+# Default shell is $SHELL on Linux.
+default_shell = "/bin/bash"
+# Must be usr\bin\bash.exe (the real bash), NOT bin\bash.exe (a launcher
+# wrapper that herdr cannot drive directly).
+
+[keys]
+# Keep the ctrl+b prefix bindings, add direct prefix-free chords.
+# NOT ctrl+alt: on the es-ES layout ctrl+alt IS AltGr, so the OS consumes those
+# chords before herdr sees them. ctrl+shift is free and layout-independent.
+# Brackets are also avoided: herdr only names minus/comma/ampersand/plus/backtick,
+# and [ ] need AltGr on es-ES anyway.
+focus_pane_left   = ["prefix+h", "ctrl+shift+h", "alt+h", "alt+left"]
+focus_pane_down   = ["prefix+j", "ctrl+shift+j", "alt+j"]
+focus_pane_up     = ["prefix+k", "ctrl+shift+k", "alt+k"]
+focus_pane_right  = ["prefix+l", "ctrl+shift+l", "alt+l", "alt+right"]
+previous_tab      = ["prefix+p", "ctrl+shift+left"]
+next_tab          = ["prefix+n", "ctrl+shift+right"]
+new_tab           = ["prefix+c", "ctrl+shift+t"]
+split_vertical    = ["prefix+v", "ctrl+shift+d"]
+split_horizontal  = ["prefix+minus", "ctrl+shift+minus"]
+zoom              = ["prefix+z", "ctrl+shift+z"]
+switch_tab        = "prefix+1..9"
+switch_workspace  = "alt+1..9"
+previous_workspace = ["prefix+ctrl+p", "ctrl+shift+up"]
+next_workspace     = ["prefix+ctrl+n", "ctrl+shift+down"]
+previous_agent   = ["prefix+up", "alt+up"]
+next_agent       = ["prefix+down", "alt+down"]
+
+[[keys.command]]
+key = "alt+shift+h"
+type = "shell"
+command = "herdr pane swap --current --direction left"
+
+[[keys.command]]
+key = "alt+shift+j"
+type = "shell"
+command = "herdr pane swap --current --direction down"
+
+[[keys.command]]
+key = "alt+shift+k"
+type = "shell"
+command = "herdr pane swap --current --direction up"
+
+[[keys.command]]
+key = "alt+shift+l"
+type = "shell"
+command = "herdr pane swap --current --direction right"
+
+# Toggle the herdr-reviewr diff pane (plugin persiyanov.reviewr).
+[[keys.command]]
+key = "ctrl+shift+r"
+type = "plugin_action"
+command = "persiyanov.reviewr.toggle"
+
+# Toggle the file explorer pane (plugin herdr-file-viewer), VS Code's explorer chord.
+[[keys.command]]
+key = "ctrl+shift+e"
+type = "plugin_action"
+command = "herdr-file-viewer.open-file-viewer"
+
+[[keys.command]]
+key = "prefix+f"
+type = "plugin_action"
+command = "herdr-file-viewer.open-file-viewer"
+
+[ui.sound]
+enabled = false
+
+[ui]
+agent_panel_sort = "spaces"
+# Show the focused pane's own title (shell + path from the prompt) in the Windows Terminal tab.
+window_title = "{terminal_title}"
+# Hide the per-pane scrollbars (mouse wheel still scrolls).
+pane_scrollbars = false
+# Rex-like: name each split pane by its agent, and show blocked/working/done by shape.
+show_agent_labels_on_pane_borders = true
+status_indicators = "symbols"
+
+[ui.toast]
+# Rex-like: floating in-app notifications when a background agent finishes or needs you.
+delivery = "herdr"
+
+# [theme.custom]
+# Pi Night (disabled so the selected built-in theme supplies the colors).
+# sidebar_bg    = "reset"
+# panel_bg      = "#101116"
+# active_row_bg = "#242527"
+# selection_bg  = "#2A3550"
+# accent        = "#4274EA"
+# green         = "#7EB07F"
+# blue          = "#7598D8"
+# red           = "#D08582"
+# yellow        = "#D9B97A"
+# surface0      = "#1B1C20"
+# surface1      = "#2C2E34"
+# overlay0      = "#5C6070"
+# text          = "#D3D5DB"
+# subtext0      = "#A5A6AA"
+# overlay1      = "#8A8C92"
+
+# --- Cursor Dark (cedricverlinden.cursor-dark) ------------------------------
+# To use it: comment out the Pi Dark [theme.custom] block above, uncomment
+# this one, set Windows Terminal's scheme to "Cursor Dark", then run
+#   herdr server reload-config
+# [theme.custom]
+# sidebar_bg    = "#1A1A1A"
+# panel_bg      = "#1A1A1A"
+# active_row_bg = "#343434"
+# selection_bg  = "#404040"
+# accent        = "#4C9DF3"
+# green         = "#A3BE8C"
+# blue          = "#81A1C1"
+# red           = "#BF616A"
+# yellow        = "#EBCB8B"
+# surface0      = "#2A2A2A"
+# surface1      = "#3A3A3A"
+# overlay0      = "#6A6A6A"
+# text          = "#D8DEE9"
+# subtext0      = "#B0B0B0"
+# overlay1      = "#8A8A8A"
+
+# --- Paper Light (pi.dev palette) ------------------------------------------
+# To use it: comment out the Cursor Dark [theme.custom] block above, uncomment
+# this one, set Windows Terminal's scheme to "Paper Light", then run
+#   herdr server reload-config
+# [theme.custom]
+# sidebar_bg    = "#DDD5CE"
+# panel_bg      = "#DDD5CE"
+# active_row_bg = "#CFC4BA"
+# selection_bg  = "#D4C8BE"
+# accent        = "#4B607C"
+# green         = "#5E6B3A"
+# blue          = "#4B607C"
+# red           = "#9E3B2C"
+# yellow        = "#9A6A1F"
+# surface0      = "#D6CEC7"
+# surface1      = "#C4BAB1"
+# overlay0      = "#8B847D"
+# text          = "#252F3D"
+# subtext0      = "#384251"
+# overlay1      = "#5C5752"
+
+[theme]
+# Pi Night — colors from the saved Herdr Pi Night palette.
+name = "catppuccin-latte"
+auto_switch = false
+
+[theme.custom]
+panel_bg = "#101116"
+sidebar_bg = "reset"
+active_row_bg = "#242527"
+selection_bg = "#2A3550"
+surface0 = "#1B1C20"
+surface1 = "#2C2E34"
+surface_dim = "#101116"
+overlay0 = "#5C6070"
+overlay1 = "#8A8C92"
+text = "#D3D5DB"
+subtext0 = "#A5A6AA"
+accent = "#4274EA"
+blue = "#7598D8"
+green = "#7EB07F"
+yellow = "#D9B97A"
+red = "#D08582"

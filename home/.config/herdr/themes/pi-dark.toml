@@ -1,0 +1,26 @@
+[theme]
+# Pi Dark — Windows Terminal "Pi Dark" palette.
+# Neutral UI shades blend the scheme background and foreground.
+name = "catppuccin"
+auto_switch = false
+
+[theme.custom]
+panel_bg = "#161D27"
+sidebar_bg = "#161D27"
+active_row_bg = "#2A3C4E"
+selection_bg = "#2A3C4E"
+surface0 = "#202630"
+surface1 = "#293039"
+surface_dim = "#161D27"
+overlay0 = "#757D89"
+overlay1 = "#898D93"
+text = "#D5D8DB"
+subtext0 = "#A5A9AE"
+accent = "#6A9FCC"
+blue = "#6A9FCC"
+mauve = "#A595D6"
+green = "#5DB87A"
+yellow = "#E8993A"
+red = "#E8704F"
+teal = "#57B1B8"
+peach = "#E1B06E"
