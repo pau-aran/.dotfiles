@@ -1,0 +1,296 @@
+diff --git a/internal/rex/pty_windows.go b/internal/rex/pty_windows.go
+index 4bd3923..7cfedba 100644
+--- a/internal/rex/pty_windows.go
++++ b/internal/rex/pty_windows.go
+@@ -218,9 +218,8 @@ func environmentBlock(env []string) []uint16 {
+ }
+ 
+ // shellCommand returns the program, its arguments and the shell's name
+-// for a session: when cmd is empty, $SHELL when it names a program of
+-// Windows (not one of MSYS's paths), else PowerShell, else the command
+-// interpreter.
++// for a session: when cmd is empty, start the default WSL distro in its
++// Linux home. Fall back to a Windows shell if wsl.exe is not available.
+ func shellCommand(cmd []string) (path string, argv []string, name string, err error) {
+ 	if len(cmd) > 0 {
+ 		path, err = exec.LookPath(cmd[0])
+@@ -229,6 +228,9 @@ func shellCommand(cmd []string) (path string, argv []string, name string, err er
+ 		}
+ 		return path, cmd, exeName(cmd[0]), nil
+ 	}
++	if wsl, err := exec.LookPath("wsl.exe"); err == nil {
++		return wsl, []string{"wsl.exe", "--cd", "~"}, "wsl", nil
++	}
+ 	for _, sh := range []string{os.Getenv("SHELL"), "pwsh.exe", "powershell.exe", os.Getenv("COMSPEC"), "cmd.exe"} {
+ 		if sh == "" {
+ 			continue
+diff --git a/main.go b/main.go
+index 6bd0502..fa6b793 100644
+--- a/main.go
++++ b/main.go
+@@ -98,7 +98,7 @@ func (a *App) open() {
+ 		StateKey:             "main",
+ 		TitleBarStyle:        mygo.TitleBarHidden,
+ 		TrafficLightPosition: &mygo.Point{X: 16, Y: 15},
+-		BackgroundColor:      "light-dark(#efe1e6, #231e27)",
++		BackgroundColor:      "light-dark(#efe1e6, #1e1e2e)",
+ 		Content:              ui.View(a.view),
+ 	}
+ 	if ownControls {
+diff --git a/mygo.json b/mygo.json
+index 31e0ae6..c36ca5b 100644
+--- a/mygo.json
++++ b/mygo.json
+@@ -1,6 +1,6 @@
+ {
+-  "name": "GoRex",
+-  "identifier": "dev.gorex.app",
++  "name": "GoRex WSL",
++  "identifier": "dev.gorex.wsl",
+   "version": "0.1.0",
+   "copyright": "A replica of Superlogical's Rex, built with MyGo",
+   "out": "build",
+diff --git a/settings.go b/settings.go
+index 6bbaac6..6c1b4c4 100644
+--- a/settings.go
++++ b/settings.go
+@@ -14,13 +14,13 @@ import (
+ // server's state.
+ type settings struct {
+ 	// Appearance is "light", "dark", or "" to follow the system.
+-	Appearance string  `json:"appearance,omitempty"`
++	Appearance string  `json:"appearance"`
+ 	FontSize   float32 `json:"fontSize,omitempty"`
+ }
+ 
+ const defaultFontSize = 11.6
+ 
+-var prefs settings
++var prefs = settings{Appearance: "dark"}
+ 
+ func settingsPath() string { return filepath.Join(rex.Dir(), "settings.json") }
+ 
+diff --git a/style.go b/style.go
+index 384d259..2ce78c3 100644
+--- a/style.go
++++ b/style.go
+@@ -65,39 +65,38 @@ var lightColors = colors{
+ }
+ 
+ var darkColors = colors{
+-	bgTop:    ui.Hex("#2c2131"),
+-	bgMid:    ui.Hex("#231e27"),
+-	bgLow:    ui.Hex("#221f22"),
+-	bgBottom: ui.Hex("#2a2619"),
+-	bgTint:   ui.RGBA(80, 40, 60, 0.25),
+-
+-	card:              ui.RGBA(20, 20, 24, 0.5),
+-	cardFocused:       ui.RGBA(36, 36, 41, 0.94),
++	bgTop:    ui.Hex("#181825"),
++	bgMid:    ui.Hex("#1e1e2e"),
++	bgLow:    ui.Hex("#1e1e2e"),
++	bgBottom: ui.Hex("#1e1e2e"),
++
++	card:              ui.Hex("#1e1e2e"),
++	cardFocused:       ui.Hex("#1e1e2e"),
+ 	cardBorder:        ui.RGBA(255, 255, 255, 0.05),
+ 	cardBorderFocused: ui.RGBA(255, 255, 255, 0.14),
+ 	shadow:            ui.RGBA(0, 0, 0, 0.25),
+ 	shadowFocused:     ui.RGBA(0, 0, 0, 0.4),
+ 
+-	text:      ui.Hex("#f2f2f7"),
+-	textMuted: ui.Hex("#aeaeb2"),
+-	textFaint: ui.Hex("#8e8e93"),
+-	iconMuted: ui.Hex("#98989d"),
++	text:      ui.Hex("#cdd6f4"),
++	textMuted: ui.Hex("#bac2de"),
++	textFaint: ui.Hex("#9399b2"),
++	iconMuted: ui.Hex("#9399b2"),
+ 	hover:     ui.RGBA(255, 255, 255, 0.08),
+ 	pressed:   ui.RGBA(255, 255, 255, 0.14),
+ 
+ 	track:       ui.RGBA(255, 255, 255, 0.06),
+ 	trackBorder: ui.RGBA(255, 255, 255, 0.06),
+-	tabActive:   ui.RGBA(255, 255, 255, 0.14),
++	tabActive:   ui.Hex("#313244"),
+ 	tabSep:      ui.RGBA(255, 255, 255, 0.14),
+ 	tileRim:     ui.RGBA(255, 255, 255, 0.22),
+ 
+-	busy:      ui.Hex("#4ade80"),
+-	attention: ui.Hex("#fbbf24"),
+-	exited:    ui.Hex("#636366"),
++	busy:      ui.Hex("#a6e3a1"),
++	attention: ui.Hex("#f9e2af"),
++	exited:    ui.Hex("#6c7086"),
+ 
+-	panel:       ui.RGBA(38, 38, 42, 0.97),
+-	panelBorder: ui.RGBA(255, 255, 255, 0.1),
+-	panelSel:    ui.RGBA(108, 178, 255, 0.18),
++	panel:       ui.Hex("#181825"),
++	panelBorder: ui.Hex("#45475a"),
++	panelSel:    ui.Hex("#585b70"),
+ 	backdrop:    ui.RGBA(0, 0, 0, 0.2),
+ }
+ 
+@@ -153,15 +152,16 @@ var lightTerm = &terminal.Theme{
+ 	},
+ }
+ 
++// Catppuccin Mocha ANSI palette from the Windows Terminal Ubuntu profile.
+ var darkTerm = &terminal.Theme{
+-	Foreground: ui.Hex("#e6e6ea"),
+-	Background: ui.Hex("#1e1e22"),
+-	Cursor:     ui.Hex("#e6e6ea"),
+-	Selection:  ui.RGBA(108, 178, 255, 0.28),
++	Foreground: ui.Hex("#cdd6f4"),
++	Background: ui.Hex("#1e1e2e"),
++	Cursor:     ui.Hex("#f5e0dc"),
++	Selection:  ui.Hex("#585b70"),
+ 	Palette: [16]ui.Color{
+-		ui.Hex("#3a3a40"), ui.Hex("#ff6b7f"), ui.Hex("#7bd88f"), ui.Hex("#e5c07b"),
+-		ui.Hex("#6cb2ff"), ui.Hex("#c792ea"), ui.Hex("#56d4dd"), ui.Hex("#d0d0d6"),
+-		ui.Hex("#6e6e78"), ui.Hex("#ff8c9c"), ui.Hex("#9be8a8"), ui.Hex("#f2d28a"),
+-		ui.Hex("#8ec5ff"), ui.Hex("#d7a8f2"), ui.Hex("#7fe3ea"), ui.Hex("#ffffff"),
++		ui.Hex("#45475a"), ui.Hex("#f38ba8"), ui.Hex("#a6e3a1"), ui.Hex("#f9e2af"),
++		ui.Hex("#89b4fa"), ui.Hex("#f5c2e7"), ui.Hex("#94e2d5"), ui.Hex("#bac2de"),
++		ui.Hex("#585b70"), ui.Hex("#f38ba8"), ui.Hex("#a6e3a1"), ui.Hex("#f9e2af"),
++		ui.Hex("#89b4fa"), ui.Hex("#f5c2e7"), ui.Hex("#94e2d5"), ui.Hex("#a6adc8"),
+ 	},
+ }
+diff --git a/tabs.go b/tabs.go
+index 44d30c1..81396cd 100644
+--- a/tabs.go
++++ b/tabs.go
+@@ -13,50 +13,24 @@ import (
+ 
+ const (
+ 	tabH     = 28
+-	tabMaxW  = 214
+-	tabMinW  = 120
++	sidebarW = 180
+ 	tileW    = 21
+ 	tileH    = 16
+ 	tileStep = 5 // how far each tile behind peeks out
+ )
+ 
+-// tabStrip draws the tabs, in a track as wide as they are, which shrinks
+-// with them when the title bar has no room for them all. The track is part
+-// of the title bar: its edges and the gaps between tabs drag the window.
+-func (a *App) tabStrip(c *ui.Context, k *colors) {
+-	widths := make([]float32, len(a.tabs))
+-	total := float32(4 + max(len(a.tabs)-1, 0)) // the padding and separators
+-	for i, t := range a.tabs {
+-		widths[i] = tabWidth(c, t)
+-		total += widths[i]
+-	}
+-	track := ui.Row(c).Basis(total).Shrink(1).MinWidth(0).Height(tabH+4).Padding(2).Radius((tabH+4)/2).
+-		Background(k.track).Border(0.5, k.trackBorder).AlignItems(ui.Center).ClipX().
+-		DragWindow().Role(ui.RoleTabList).Label("Tabs")
+-	tabs := slices.Clone(a.tabs)
+-	track.Children(func() {
+-		for i, t := range tabs {
+-			if i > 0 {
+-				sep := ui.Box(c).Size(1, 16).Shrink(0)
+-				if i != a.active && i-1 != a.active {
+-					sep.Background(k.tabSep)
+-				}
++// tabSidebar draws the scrollable list of tabs left of the terminal panes.
++func (a *App) tabSidebar(c *ui.Context, k *colors) {
++	ui.Scroll(c).Width(sidebarW).Shrink(0).Padding(4).Radius(10).
++		Background(k.track).Border(0.5, k.trackBorder).Role(ui.RoleTabList).Label("Tabs").Children(func() {
++		ui.Column(c).FillWidth().Gap(3).Children(func() {
++			for i, t := range slices.Clone(a.tabs) {
++				a.tabItem(c, k, i, t)
+ 			}
+-			a.tabItem(c, k, i, t, widths[i])
+-		}
++		})
+ 	})
+ }
+ 
+-// tabWidth returns the width a tab takes when the title bar has room: its
+-// tiles and its label, the label faded out past tabMaxW, and room for its
+-// close button or its dot.
+-func tabWidth(c *ui.Context, t *Tab) float32 {
+-	name, detail := t.label()
+-	w, _ := c.MeasureText(0, tabLabel(name, detail, ui.Color{}, ui.Color{})...)
+-	tiles := float32(tileW + tileStep*min(len(t.panes())-1, 2) + 2)
+-	return min(max(6+tiles+9+w+9+18+10, tabMinW), tabMaxW)
+-}
+-
+ // tabLabel is the label of a tab: the name and, fainter, the detail.
+ func tabLabel(name, detail string, nameColor, detailColor ui.Color) []ui.Span {
+ 	return []ui.Span{
+@@ -65,14 +39,10 @@ func tabLabel(name, detail string, nameColor, detailColor ui.Color) []ui.Span {
+ 	}
+ }
+ 
+-// titleFree is how much of the title bar the tabs leave free, after
+-// them, to drag the window by.
+-const titleFree = 56
+-
+ // tabItem draws a tab: the tiles of its panes' programs and its label.
+-func (a *App) tabItem(c *ui.Context, k *colors, i int, t *Tab, width float32) {
++func (a *App) tabItem(c *ui.Context, k *colors, i int, t *Tab) {
+ 	active := i == a.active
+-	e := ui.Row(c.Key(t.ID)).Height(tabH).Basis(width).Shrink(1).MinWidth(64).
++	e := ui.Row(c.Key(t.ID)).Height(tabH).Shrink(0).
+ 		Padding(0, 10, 0, 6).Gap(9).AlignItems(ui.Center).Radius(tabH / 2).Role(ui.RoleTab).Selected(active)
+ 	name, detail := t.label()
+ 	e.Label(name + " " + detail)
+@@ -196,10 +166,10 @@ func (a *App) tabMenu(m *ui.Menu, t *Tab) {
+ 	}
+ 	m.Separator()
+ 	i := slices.Index(a.tabs, t)
+-	if m.Item("Move Left").Disabled(i <= 0).Chosen() {
++	if m.Item("Move Up").Disabled(i <= 0).Chosen() {
+ 		a.moveTab(t, i-1)
+ 	}
+-	if m.Item("Move Right").Disabled(i >= len(a.tabs)-1).Chosen() {
++	if m.Item("Move Down").Disabled(i >= len(a.tabs)-1).Chosen() {
+ 		a.moveTab(t, i+1)
+ 	}
+ 	m.Separator()
+diff --git a/view.go b/view.go
+index eb4b5bf..e0ef784 100644
+--- a/view.go
++++ b/view.go
+@@ -25,10 +25,13 @@ func (a *App) view(c *ui.Context) {
+ 	c.Root().Background(k.bgBottom)
+ 	ui.Column(c).Fill().Draw(func(p *ui.Painter, r ui.Rect) { paintBackground(p, r, k) }).Children(func() {
+ 		a.titleBar(c, k)
+-		ui.Column(c).Grow(1).MinHeight(0).Padding(0, gap, gap, gap).Children(func() {
+-			if t := a.tab(); t != nil {
+-				a.tabContent(c, k, t)
+-			}
++		ui.Row(c).Grow(1).MinHeight(0).Padding(0, gap, gap, gap).Gap(gap).AlignItems(ui.Stretch).Children(func() {
++			a.tabSidebar(c, k)
++			ui.Column(c).Grow(1).MinWidth(0).Children(func() {
++				if t := a.tab(); t != nil {
++					a.tabContent(c, k, t)
++				}
++			})
+ 		})
+ 	})
+ 	if a.err != "" {
+@@ -55,7 +58,7 @@ func (a *App) view(c *ui.Context) {
+ var ownControls = runtime.GOOS == "windows"
+ 
+ // titleBar draws the title bar under the window's controls: the host,
+-// the tabs, and the buttons of the command palette and a new tab.
++// the command palette and new-tab buttons.
+ func (a *App) titleBar(c *ui.Context, k *colors) {
+ 	bar := c.TitleBar()
+ 	left := bar.Left
+@@ -66,10 +69,7 @@ func (a *App) titleBar(c *ui.Context, k *colors) {
+ 	}
+ 	ui.Row(c).Height(titleH).Padding(0, max(bar.Right, 10), 0, left).Gap(14).AlignItems(ui.Center).DragWindow().Children(func() {
+ 		a.hostChip(c, k)
+-		a.tabStrip(c, k)
+-		// The title bar between the tabs and the buttons, which drags the
+-		// window, and a double click on which zooms it.
+-		ui.Spacer(c).MinWidth(titleFree - 14)
++		ui.Spacer(c).MinWidth(42)
+ 		ui.Row(c).Gap(2).AlignItems(ui.Center).Shrink(0).Children(func() {
+ 			if iconButton(c, k, "command", "Command Palette", 30, 17).Tooltip(tip("Command Palette", &cmdPalette)).Clicked() {
+ 				a.openPalette()

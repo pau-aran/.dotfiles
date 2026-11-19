@@ -18,6 +18,21 @@ git clone https://github.com/pau-aran/.dotfiles.git ~/.dotfiles
 ~/.dotfiles/dot doctor   # report files that are not linked and missing tools
 ```
 
+## GoRex on Windows
+
+From WSL with Go 1.27.1 or newer, run:
+
+```sh
+~/.dotfiles/packages/gorex/install-windows.sh
+```
+
+This builds a native Windows app from pinned GoRex source and adds **GoRex**
+to the Start menu. New panes start in the default WSL distribution's home
+directory and use the Ubuntu profile's Catppuccin Mocha palette, with tabs
+in a left sidebar. Your WSL shell loads its usual prompt and startup files. GoRex keeps its own shortcuts, layout, and sessions; it
+doesn't import Herdr workspaces or plugins. Before reinstalling, quit GoRex
+and end its sessions so Windows can replace the executable.
+
 ## Not tracked
 
 Each machine keeps its own:

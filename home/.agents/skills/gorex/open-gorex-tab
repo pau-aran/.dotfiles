@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Open an isolated GoRex window and run one argv in its first WSL tab.
+set -euo pipefail
+
+if [[ ${1:-} == --help || $# -eq 0 ]]; then
+  echo 'Usage: open-gorex-tab <tab-title> <wsl-working-directory> -- <command> [args...]'
+  exit 0
+fi
+if [[ $# -lt 4 || $3 != -- || ! $1 || $1 =~ [[:cntrl:]] || ! -d $2 || ! $4 ]]; then
+  echo 'GoRex tab: expected a one-line title, an existing WSL directory, and -- <command> [args...]' >&2
+  exit 2
+fi
+
+title=$1
+workdir=$(cd -- "$2" && pwd -P)
+shift 3
+win_temp=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:TEMP)' | tr -d '\r')
+run_dir=$(mktemp -d "$(wslpath -u "$win_temp")/gorex-tab.XXXXXXXX")
+mkdir "$run_dir/debug"
+trap 'rm -f "$run_dir/debug/do"; rmdir "$run_dir/debug"' EXIT
+
+# Quote each argument independently; base64 keeps the debug hook's line and escape parsing out of the payload.
+printf -v launch '%q ' "$@"
+printf -v payload 'if cd -- %q && command -v -- %q >/dev/null; then mkdir -- %q; command %s; else mkdir -- %q; fi' \
+  "$workdir" "$1" "$run_dir/ready" "$launch" "$run_dir/error"
+encoded=$(printf '%s' "$payload" | base64 -w0)
+printf 'name %s\ntype eval "$(printf %%s %s | base64 -d)"\\r\n' "$title" "$encoded" > "$run_dir/debug/do"
+
+GOREX_TAB_RUN="$(wslpath -w "$run_dir")" WSLENV="${WSLENV:+$WSLENV:}GOREX_TAB_RUN" \
+  powershell.exe -NoProfile -NonInteractive -Command '
+    $ErrorActionPreference = "Stop"
+    $programs = [Environment]::GetFolderPath("Programs")
+    $link = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $programs "GoRex.lnk"))
+    if (-not ($link.TargetPath -and (Test-Path -LiteralPath $link.TargetPath))) {
+      throw "GoRex tab: install GoRex with the dotfiles installer first."
+    }
+    $env:GOREX_DIR = Join-Path $env:GOREX_TAB_RUN "state"
+    $env:GOREX_DEBUG = Join-Path $env:GOREX_TAB_RUN "debug"
+    Start-Process -FilePath $link.TargetPath -WorkingDirectory $link.WorkingDirectory
+  '
+
+for ((i=0; i<120; i++)); do
+  if [[ -d $run_dir/ready ]]; then
+    printf 'GoRex tab launched: %s\n' "$title"
+    exit 0
+  fi
+  if [[ -d $run_dir/error ]]; then
+    echo 'GoRex tab: the directory or command is unavailable in the default WSL distro.' >&2
+    exit 1
+  fi
+  sleep 0.25
+done
+echo 'GoRex tab: launch was not confirmed. Inspect the new GoRex window before retrying.' >&2
+exit 1
