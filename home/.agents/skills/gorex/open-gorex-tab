@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
-# Open an isolated GoRex window and run one argv in its first WSL tab.
+# Run one argv in a new GoRex tab or pane of the running window, or in a new window when none listens.
 set -euo pipefail
 
 if [[ ${1:-} == --help || $# -eq 0 ]]; then
-  echo 'Usage: open-gorex-tab <tab-title> <wsl-working-directory> -- <command> [args...]'
+  echo 'Usage: open-gorex-tab [--split-right|--split-down] <tab-title> <wsl-working-directory> -- <command> [args...]'
   exit 0
 fi
+open=New-Tab
+case $1 in
+  --split-right) open=Split-Right; shift ;;
+  --split-down) open=Split-Down; shift ;;
+esac
 if [[ $# -lt 4 || $3 != -- || ! $1 || $1 =~ [[:cntrl:]] || ! -d $2 || ! $4 ]]; then
   echo 'GoRex tab: expected a one-line title, an existing WSL directory, and -- <command> [args...]' >&2
   exit 2
@@ -14,34 +19,55 @@ fi
 title=$1
 workdir=$(cd -- "$2" && pwd -P)
 shift 3
-win_temp=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:TEMP)' | tr -d '\r')
-run_dir=$(mktemp -d "$(wslpath -u "$win_temp")/gorex-tab.XXXXXXXX")
-mkdir "$run_dir/debug"
-trap 'rm -f "$run_dir/debug/do"; rmdir "$run_dir/debug"' EXIT
+win_dirs=$(powershell.exe -NoProfile -NonInteractive -Command '[Console]::Write($env:TEMP + "|" + $env:LOCALAPPDATA)' | tr -d '\r')
+run_dir=$(mktemp -d "$(wslpath -u "${win_dirs%%|*}")/gorex-tab.XXXXXXXX")
+control=$(wslpath -u "${win_dirs#*|}\\GoRex WSL\\control")
 
 # Quote each argument independently; base64 keeps the debug hook's line and escape parsing out of the payload.
 printf -v launch '%q ' "$@"
 printf -v payload 'if cd -- %q && command -v -- %q >/dev/null; then mkdir -- %q; command %s; else mkdir -- %q; fi' \
   "$workdir" "$1" "$run_dir/ready" "$launch" "$run_dir/error"
 encoded=$(printf '%s' "$payload" | base64 -w0)
-printf 'name %s\ntype eval "$(printf %%s %s | base64 -d)"\\r\n' "$title" "$encoded" > "$run_dir/debug/do"
+printf -v name 'name %s\n' "$title"
+printf -v type 'type eval "$(printf %%s %s | base64 -d)"\\r\n' "$encoded"
 
-GOREX_TAB_RUN="$(wslpath -w "$run_dir")" WSLENV="${WSLENV:+$WSLENV:}GOREX_TAB_RUN" \
-  powershell.exe -NoProfile -NonInteractive -Command '
-    $ErrorActionPreference = "Stop"
-    $programs = [Environment]::GetFolderPath("Programs")
-    $link = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $programs "GoRex.lnk"))
-    if (-not ($link.TargetPath -and (Test-Path -LiteralPath $link.TargetPath))) {
-      throw "GoRex tab: install GoRex with the dotfiles installer first."
-    }
-    $env:GOREX_DIR = Join-Path $env:GOREX_TAB_RUN "state"
-    $env:GOREX_DEBUG = Join-Path $env:GOREX_TAB_RUN "debug"
-    Start-Process -FilePath $link.TargetPath -WorkingDirectory $link.WorkingDirectory
-  '
+# A running GoRex window polls its control folder every 150 ms and deletes "do" once it runs it.
+taken=
+if [[ -d $control ]]; then
+  tab_name=$name
+  [[ $open == New-Tab ]] || tab_name=
+  printf '%s\n%s%s' "$open" "$tab_name" "$type" > "$control/do.tmp"
+  mv "$control/do.tmp" "$control/do"
+  for ((i=0; i<8; i++)); do
+    sleep 0.25
+    [[ -e $control/do ]] || { taken=1; break; }
+  done
+  [[ $taken ]] || rm -f "$control/do"
+fi
+
+if [[ ! $taken ]]; then
+  mkdir "$run_dir/debug"
+  trap 'rm -f "$run_dir/debug/do"; rmdir "$run_dir/debug"' EXIT
+  printf '%s%s' "$name" "$type" > "$run_dir/debug/do"
+  GOREX_TAB_RUN="$(wslpath -w "$run_dir")" WSLENV="${WSLENV:+$WSLENV:}GOREX_TAB_RUN" \
+    powershell.exe -NoProfile -NonInteractive -Command '
+      $ErrorActionPreference = "Stop"
+      $programs = [Environment]::GetFolderPath("Programs")
+      $link = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $programs "GoRex.lnk"))
+      if (-not ($link.TargetPath -and (Test-Path -LiteralPath $link.TargetPath))) {
+        throw "GoRex tab: install GoRex with the dotfiles installer first."
+      }
+      $env:GOREX_DIR = Join-Path $env:GOREX_TAB_RUN "state"
+      $env:GOREX_DEBUG = Join-Path $env:GOREX_TAB_RUN "debug"
+      Start-Process -FilePath $link.TargetPath -WorkingDirectory $link.WorkingDirectory
+    '
+fi
 
 for ((i=0; i<120; i++)); do
   if [[ -d $run_dir/ready ]]; then
-    printf 'GoRex tab launched: %s\n' "$title"
+    where='a new window'
+    [[ $taken ]] && where='the running window'
+    printf 'GoRex tab launched in %s: %s\n' "$where" "$title"
     exit 0
   fi
   if [[ -d $run_dir/error ]]; then
@@ -50,5 +76,5 @@ for ((i=0; i<120; i++)); do
   fi
   sleep 0.25
 done
-echo 'GoRex tab: launch was not confirmed. Inspect the new GoRex window before retrying.' >&2
+echo 'GoRex tab: launch was not confirmed. Inspect the GoRex window before retrying.' >&2
 exit 1

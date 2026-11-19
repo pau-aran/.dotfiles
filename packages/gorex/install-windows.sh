@@ -38,5 +38,9 @@ powershell.exe -NoProfile -NonInteractive -Command '
   $link.TargetPath = $exe
   $link.WorkingDirectory = $dest
   $link.Save()
+  # GoRex windows poll this folder, so open-gorex-tab can add tabs and panes to a running window.
+  $control = Join-Path $env:LOCALAPPDATA "GoRex WSL\control"
+  New-Item -ItemType Directory -Path $control -Force | Out-Null
+  [Environment]::SetEnvironmentVariable("GOREX_DEBUG", $control, "User")
   Write-Output "Installed GoRex for Windows. Open GoRex from the Start menu."
 '
