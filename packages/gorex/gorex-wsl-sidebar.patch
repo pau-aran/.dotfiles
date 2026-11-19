@@ -1,3 +1,32 @@
+diff --git a/commands.go b/commands.go
+index 06bf7a3..f5a5ec2 100644
+--- a/commands.go
++++ b/commands.go
+@@ -35,6 +35,7 @@ var (
+ 	cmdEqualize    = command{Title: "Equalize Panes", Accel: "CmdOrCtrl+Ctrl+=", Keys: "⌃⌘=", Run: func(a *App) { a.equalize() }}
+ 	cmdNextTab     = command{Title: "Next Tab", Accel: "CmdOrCtrl+Shift+]", Keys: "⇧⌘]", Other: shortcut{ui.Ctrl, ui.KeyPageDown}, Run: func(a *App) { a.cycleTab(1) }}
+ 	cmdPrevTab     = command{Title: "Previous Tab", Accel: "CmdOrCtrl+Shift+[", Keys: "⇧⌘[", Other: shortcut{ui.Ctrl, ui.KeyPageUp}, Run: func(a *App) { a.cycleTab(-1) }}
++	cmdSidebar     = command{Title: "Toggle Sidebar", Accel: "CmdOrCtrl+Shift+B", Keys: "⇧⌘B", Other: ctrlShift(ui.KeyB), Run: func(a *App) { a.hideSidebar = !a.hideSidebar }}
+ 	cmdRenameTab   = command{Title: "Rename Tab…", Accel: "CmdOrCtrl+Shift+R", Keys: "⇧⌘R", Other: ctrlShift(ui.KeyR), Run: func(a *App) { a.startRename() }}
+ 	cmdPalette     = command{Title: "Command Palette…", Accel: "CmdOrCtrl+Shift+P", Keys: "⇧⌘P", Other: ctrlShift(ui.KeyP), Run: func(a *App) { a.openPalette() }, Hidden: true}
+ 	cmdPalette2    = command{Title: "Go to Pane…", Accel: "CmdOrCtrl+P", Keys: "⌘P", Run: func(a *App) { a.openPalette() }, Hidden: true}
+@@ -61,7 +62,7 @@ var (
+ // paletteCommands are those the command palette lists, before the tabs.
+ var paletteCommands = []*command{
+ 	&cmdNewTab, &cmdSplitRight, &cmdSplitDown, &cmdZoom, &cmdEqualize, &cmdClosePane, &cmdCloseTab,
+-	&cmdNextTab, &cmdPrevTab, &cmdRenameTab,
++	&cmdNextTab, &cmdPrevTab, &cmdRenameTab, &cmdSidebar,
+ 	&cmdFocusLeft, &cmdFocusRight, &cmdFocusUp, &cmdFocusDown,
+ 	&cmdGrowLeft, &cmdGrowRight, &cmdGrowUp, &cmdGrowDown,
+ 	&cmdBigger, &cmdSmaller, &cmdActualSize, &cmdLight, &cmdDark, &cmdSystem,
+@@ -177,6 +178,7 @@ func (a *App) menu() *mygo.Menu {
+ 		{Label: "View", Submenu: []*mygo.MenuItem{
+ 			item(&cmdPalette),
+ 			item(&cmdPalette2),
++			item(&cmdSidebar),
+ 			mygo.Separator(),
+ 			item(&cmdZoom),
+ 			item(&cmdEqualize),
 diff --git a/internal/rex/pty_windows.go b/internal/rex/pty_windows.go
 index 4bd3923..7cfedba 100644
 --- a/internal/rex/pty_windows.go
@@ -70,6 +99,18 @@ index 6bbaac6..6c1b4c4 100644
  
  func settingsPath() string { return filepath.Join(rex.Dir(), "settings.json") }
  
+diff --git a/state.go b/state.go
+index 896dd5c..2ff727b 100644
+--- a/state.go
++++ b/state.go
+@@ -101,6 +101,7 @@ type App struct {
+ 	focusedWin   bool
+ 	lastSnapshot string
+ 	title        string
++	hideSidebar  bool
+ 
+ 	// posted are changes to make in the next frame, from terminals of a
+ 	// view without a window, as in tests.
 diff --git a/style.go b/style.go
 index 384d259..2ce78c3 100644
 --- a/style.go
@@ -252,19 +293,20 @@ index 44d30c1..81396cd 100644
  	}
  	m.Separator()
 diff --git a/view.go b/view.go
-index eb4b5bf..e0ef784 100644
+index eb4b5bf..11bc017 100644
 --- a/view.go
 +++ b/view.go
-@@ -25,10 +25,13 @@ func (a *App) view(c *ui.Context) {
+@@ -25,10 +25,15 @@ func (a *App) view(c *ui.Context) {
  	c.Root().Background(k.bgBottom)
  	ui.Column(c).Fill().Draw(func(p *ui.Painter, r ui.Rect) { paintBackground(p, r, k) }).Children(func() {
  		a.titleBar(c, k)
 -		ui.Column(c).Grow(1).MinHeight(0).Padding(0, gap, gap, gap).Children(func() {
 -			if t := a.tab(); t != nil {
 -				a.tabContent(c, k, t)
--			}
 +		ui.Row(c).Grow(1).MinHeight(0).Padding(0, gap, gap, gap).Gap(gap).AlignItems(ui.Stretch).Children(func() {
-+			a.tabSidebar(c, k)
++			if !a.hideSidebar {
++				a.tabSidebar(c, k)
+ 			}
 +			ui.Column(c).Grow(1).MinWidth(0).Children(func() {
 +				if t := a.tab(); t != nil {
 +					a.tabContent(c, k, t)
@@ -273,7 +315,7 @@ index eb4b5bf..e0ef784 100644
  		})
  	})
  	if a.err != "" {
-@@ -55,7 +58,7 @@ func (a *App) view(c *ui.Context) {
+@@ -55,7 +60,7 @@ func (a *App) view(c *ui.Context) {
  var ownControls = runtime.GOOS == "windows"
  
  // titleBar draws the title bar under the window's controls: the host,
@@ -282,7 +324,7 @@ index eb4b5bf..e0ef784 100644
  func (a *App) titleBar(c *ui.Context, k *colors) {
  	bar := c.TitleBar()
  	left := bar.Left
-@@ -66,10 +69,7 @@ func (a *App) titleBar(c *ui.Context, k *colors) {
+@@ -66,10 +71,7 @@ func (a *App) titleBar(c *ui.Context, k *colors) {
  	}
  	ui.Row(c).Height(titleH).Padding(0, max(bar.Right, 10), 0, left).Gap(14).AlignItems(ui.Center).DragWindow().Children(func() {
  		a.hostChip(c, k)

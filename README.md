@@ -29,7 +29,7 @@ From WSL with Go 1.27.1 or newer, run:
 This builds a native Windows app from pinned GoRex source and adds **GoRex**
 to the Start menu. New panes start in the default WSL distribution's home
 directory and use the Ubuntu profile's Catppuccin Mocha palette, with tabs
-in a left sidebar. Your WSL shell loads its usual prompt and startup files. GoRex keeps its own shortcuts, layout, and sessions; it
+in a left sidebar that `Ctrl+Shift+B` toggles. Your WSL shell loads its usual prompt and startup files. GoRex keeps its own shortcuts, layout, and sessions; it
 doesn't import Herdr workspaces or plugins. Before reinstalling, quit GoRex
 and end its sessions so Windows can replace the executable.
 
